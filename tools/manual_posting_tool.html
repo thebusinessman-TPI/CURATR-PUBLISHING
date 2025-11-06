@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CURATR Manual Posting Tool</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            color: #667eea;
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 16px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .stat-number {
+            font-size: 48px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .filters {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .filters label {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .filters select, .filters input {
+            padding: 10px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            min-width: 200px;
+        }
+
+        .filters select:focus, .filters input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .platform-tabs {
+            display: flex;
+            gap: 10px;
+            margin-left: auto;
+        }
+
+        .platform-tab {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #f5f5f5;
+            color: #666;
+        }
+
+        .platform-tab.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .collection-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 25px;
+        }
+
+        .collection-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .collection-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .collection-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+        }
+
+        .collection-id {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 5px;
+            opacity: 0.9;
+        }
+
+        .collection-brand {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .video-preview {
+            width: 100%;
+            height: 300px;
+            background: #f5f5f5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+            font-size: 14px;
+            position: relative;
+        }
+
+        .video-preview video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .content-section {
+            padding: 20px;
+        }
+
+        .content-label {
+            font-size: 12px;
+            font-weight: 700;
+            color: #667eea;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .content-text {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            line-height: 1.6;
+            color: #333;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .content-text.hook {
+            font-weight: 600;
+            font-size: 16px;
+            background: #fff3cd;
+        }
+
+        .content-text.hashtags {
+            color: #667eea;
+            font-weight: 500;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            padding: 0 20px 20px 20px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-copy {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-copy:hover {
+            background: #5568d3;
+        }
+
+        .btn-copy.copied {
+            background: #10b981;
+        }
+
+        .btn-download {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .btn-download:hover {
+            background: #d97706;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #10b981;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            font-weight: 600;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: white;
+            font-size: 18px;
+        }
+
+        @media (max-width: 768px) {
+            .collection-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .filters {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .platform-tabs {
+                margin-left: 0;
+                width: 100%;
+            }
+
+            .filters select, .filters input {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎬 CURATR Manual Posting Tool</h1>
+            <p>Export content for Instagram and TikTok posting. Click "Copy All Content" to get the full text for each post.</p>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="totalCollections">0</div>
+                <div class="stat-label">Total Collections</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="filteredCollections">0</div>
+                <div class="stat-label">Showing</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="currentPlatform">Instagram</div>
+                <div class="stat-label">Platform</div>
+            </div>
+        </div>
+
+        <div class="filters">
+            <label for="brandFilter">Brand:</label>
+            <select id="brandFilter">
+                <option value="all">All Brands</option>
+            </select>
+
+            <label for="searchInput">Search:</label>
+            <input type="text" id="searchInput" placeholder="Search collections...">
+
+            <div class="platform-tabs">
+                <button class="platform-tab active" data-platform="instagram">📸 Instagram</button>
+                <button class="platform-tab" data-platform="tiktok">🎵 TikTok</button>
+            </div>
+        </div>
+
+        <div class="collection-grid" id="collectionGrid"></div>
+
+        <div class="empty-state" id="emptyState" style="display: none;">
+            No collections found. Try adjusting your filters.
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        let collections = [];
+        let currentPlatform = 'instagram';
+        let currentBrand = 'all';
+        let searchQuery = '';
+
+        // Load data
+        async function loadData() {
+            try {
+                const response = await fetch('publishing_manifest_complete_217.json');
+                const data = await response.json();
+                
+                collections = data.complete_items.map(id => ({
+                    id: id,
+                    ...data.content[id]
+                }));
+
+                document.getElementById('totalCollections').textContent = collections.length;
+                
+                // Populate brand filter
+                const brands = [...new Set(collections.map(c => c.id.split('_')[0]))].sort();
+                const brandFilter = document.getElementById('brandFilter');
+                brands.forEach(brand => {
+                    const option = document.createElement('option');
+                    option.value = brand;
+                    option.textContent = brand;
+                    brandFilter.appendChild(option);
+                });
+
+                renderCollections();
+            } catch (error) {
+                console.error('Error loading data:', error);
+                showToast('Error loading data. Make sure publishing_manifest_complete_217.json is in the same directory.', 'error');
+            }
+        }
+
+        // Render collections
+        function renderCollections() {
+            const grid = document.getElementById('collectionGrid');
+            const emptyState = document.getElementById('emptyState');
+            
+            // Filter collections
+            let filtered = collections.filter(c => {
+                const matchesBrand = currentBrand === 'all' || c.id.startsWith(currentBrand);
+                const matchesSearch = searchQuery === '' || 
+                    c.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    (c.platforms[currentPlatform]?.hook || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    (c.platforms[currentPlatform]?.caption || '').toLowerCase().includes(searchQuery.toLowerCase());
+                
+                return matchesBrand && matchesSearch;
+            });
+
+            document.getElementById('filteredCollections').textContent = filtered.length;
+
+            if (filtered.length === 0) {
+                grid.style.display = 'none';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            grid.style.display = 'grid';
+            emptyState.style.display = 'none';
+
+            grid.innerHTML = filtered.map(collection => {
+                const platform = collection.platforms[currentPlatform];
+                const brand = collection.id.split('_')[0];
+                const videoPath = `outputs/carousel_videos/${collection.videos.carousel}`;
+                
+                return `
+                    <div class="collection-card">
+                        <div class="collection-header">
+                            <div class="collection-id">${collection.id}</div>
+                            <div class="collection-brand">${brand}</div>
+                        </div>
+                        
+                        <div class="video-preview">
+                            <video controls>
+                                <source src="${videoPath}" type="video/mp4">
+                                Video not available
+                            </video>
+                        </div>
+                        
+                        <div class="content-section">
+                            <div class="content-label">Hook</div>
+                            <div class="content-text hook">${platform.hook || 'N/A'}</div>
+                            
+                            <div class="content-label">Caption</div>
+                            <div class="content-text">${platform.caption || 'N/A'}</div>
+                            
+                            <div class="content-label">Hashtags</div>
+                            <div class="content-text hashtags">${platform.hashtags || 'N/A'}</div>
+                        </div>
+                        
+                        <div class="actions">
+                            <button class="btn btn-copy" onclick="copyContent('${collection.id}', '${currentPlatform}')">
+                                📋 Copy All Content
+                            </button>
+                            <button class="btn btn-download" onclick="downloadVideo('${collection.id}')">
+                                ⬇️ Download Video
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Copy content to clipboard
+        function copyContent(collectionId, platform) {
+            const collection = collections.find(c => c.id === collectionId);
+            if (!collection) return;
+
+            const content = collection.platforms[platform];
+            const text = `HOOK:\n${content.hook}\n\nCAPTION:\n${content.caption}\n\nHASHTAGS:\n${content.hashtags}\n\nVIDEO: ${collection.videos.carousel}`;
+
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('✅ Content copied to clipboard!');
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+                showToast('❌ Failed to copy content', 'error');
+            });
+        }
+
+        // Download video
+        function downloadVideo(collectionId) {
+            const collection = collections.find(c => c.id === collectionId);
+            if (!collection) return;
+
+            const videoPath = `outputs/carousel_videos/${collection.videos.carousel}`;
+            const link = document.createElement('a');
+            link.href = videoPath;
+            link.download = collection.videos.carousel;
+            link.click();
+            
+            showToast('📥 Downloading video...');
+        }
+
+        // Show toast notification
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.style.background = type === 'error' ? '#ef4444' : '#10b981';
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // Event listeners
+        document.querySelectorAll('.platform-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.platform-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                currentPlatform = tab.dataset.platform;
+                document.getElementById('currentPlatform').textContent = 
+                    currentPlatform.charAt(0).toUpperCase() + currentPlatform.slice(1);
+                renderCollections();
+            });
+        });
+
+        document.getElementById('brandFilter').addEventListener('change', (e) => {
+            currentBrand = e.target.value;
+            renderCollections();
+        });
+
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            searchQuery = e.target.value;
+            renderCollections();
+        });
+
+        // Initialize
+        loadData();
+    </script>
+</body>
+</html>
