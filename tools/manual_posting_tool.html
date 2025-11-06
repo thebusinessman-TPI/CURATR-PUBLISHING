@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -136,6 +137,7 @@
             overflow: hidden;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
             transition: transform 0.3s, box-shadow 0.3s;
+            position: relative;
         }
 
         .collection-card:hover {
@@ -258,6 +260,28 @@
             background: #d97706;
         }
 
+        .btn-posted {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-posted.active {
+            background: #10b981;
+        }
+
+        .posted-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #10b981;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: bold;
+            z-index: 10;
+        }
+
         .toast {
             position: fixed;
             bottom: 30px;
@@ -299,6 +323,8 @@
             .platform-tabs {
                 margin-left: 0;
                 width: 100%;
+                display: grid;
+                grid-template-columns: 1fr 1fr 1fr;
             }
 
             .filters select, .filters input {
@@ -311,7 +337,7 @@
     <div class="container">
         <div class="header">
             <h1>🎬 CURATR Manual Posting Tool</h1>
-            <p>Export content for Instagram and TikTok posting. Click "Copy All Content" to get the full text for each post.</p>
+            <p>Export content for Instagram, TikTok, and YouTube Shorts. Click "Copy All Content" to get the full text for each post.</p>
         </div>
 
         <div class="stats">
@@ -320,12 +346,12 @@
                 <div class="stat-label">Total Collections</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number" id="filteredCollections">0</div>
-                <div class="stat-label">Showing</div>
+                <div class="stat-number" id="postedCollections">0</div>
+                <div class="stat-label">Posted</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number" id="currentPlatform">Instagram</div>
-                <div class="stat-label">Platform</div>
+                <div class="stat-number" id="pendingCollections">0</div>
+                <div class="stat-label">Pending</div>
             </div>
         </div>
 
@@ -335,12 +361,20 @@
                 <option value="all">All Brands</option>
             </select>
 
+            <label for="statusFilter">Status:</label>
+            <select id="statusFilter">
+                <option value="all">All</option>
+                <option value="pending">Pending</option>
+                <option value="posted">Posted</option>
+            </select>
+
             <label for="searchInput">Search:</label>
             <input type="text" id="searchInput" placeholder="Search collections...">
 
             <div class="platform-tabs">
                 <button class="platform-tab active" data-platform="instagram">📸 Instagram</button>
                 <button class="platform-tab" data-platform="tiktok">🎵 TikTok</button>
+                <button class="platform-tab" data-platform="youtube">📺 YouTube</button>
             </div>
         </div>
 
@@ -355,14 +389,16 @@
 
     <script>
         let collections = [];
+        let postedStatus = {};
         let currentPlatform = 'instagram';
         let currentBrand = 'all';
+        let currentStatusFilter = 'all';
         let searchQuery = '';
 
         // Load data
         async function loadData() {
             try {
-                const response = await fetch('publishing_manifest_complete_217.json');
+                const response = await fetch('../data/manifests/publishing_manifest_complete_217.json');
                 const data = await response.json();
                 
                 collections = data.complete_items.map(id => ({
@@ -370,8 +406,9 @@
                     ...data.content[id]
                 }));
 
-                document.getElementById('totalCollections').textContent = collections.length;
-                
+                // Load posted status from local storage
+                postedStatus = JSON.parse(localStorage.getItem('postedStatus')) || {};
+
                 // Populate brand filter
                 const brands = [...new Set(collections.map(c => c.id.split('_')[0]))].sort();
                 const brandFilter = document.getElementById('brandFilter');
@@ -385,7 +422,7 @@
                 renderCollections();
             } catch (error) {
                 console.error('Error loading data:', error);
-                showToast('Error loading data. Make sure publishing_manifest_complete_217.json is in the same directory.', 'error');
+                showToast('Error loading data. Make sure you are running this from the `tools` directory.', 'error');
             }
         }
 
@@ -397,15 +434,18 @@
             // Filter collections
             let filtered = collections.filter(c => {
                 const matchesBrand = currentBrand === 'all' || c.id.startsWith(currentBrand);
+                const matchesStatus = currentStatusFilter === 'all' || 
+                                      (currentStatusFilter === 'posted' && postedStatus[c.id]) ||
+                                      (currentStatusFilter === 'pending' && !postedStatus[c.id]);
                 const matchesSearch = searchQuery === '' || 
                     c.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
                     (c.platforms[currentPlatform]?.hook || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
                     (c.platforms[currentPlatform]?.caption || '').toLowerCase().includes(searchQuery.toLowerCase());
                 
-                return matchesBrand && matchesSearch;
+                return matchesBrand && matchesStatus && matchesSearch;
             });
 
-            document.getElementById('filteredCollections').textContent = filtered.length;
+            updateStats(filtered.length);
 
             if (filtered.length === 0) {
                 grid.style.display = 'none';
@@ -419,17 +459,19 @@
             grid.innerHTML = filtered.map(collection => {
                 const platform = collection.platforms[currentPlatform];
                 const brand = collection.id.split('_')[0];
-                const videoPath = `outputs/carousel_videos/${collection.videos.carousel}`;
+                const videoPath = `../data/videos/${collection.videos.carousel}`;
+                const isPosted = postedStatus[collection.id];
                 
                 return `
                     <div class="collection-card">
+                        ${isPosted ? '<div class="posted-badge">POSTED</div>' : ''}
                         <div class="collection-header">
                             <div class="collection-id">${collection.id}</div>
                             <div class="collection-brand">${brand}</div>
                         </div>
                         
                         <div class="video-preview">
-                            <video controls>
+                            <video controls muted loop playsinline>
                                 <source src="${videoPath}" type="video/mp4">
                                 Video not available
                             </video>
@@ -453,10 +495,22 @@
                             <button class="btn btn-download" onclick="downloadVideo('${collection.id}')">
                                 ⬇️ Download Video
                             </button>
+                            <button class="btn btn-posted ${isPosted ? 'active' : ''}" onclick="togglePostedStatus('${collection.id}')">
+                                ${isPosted ? '✅ Posted' : 'Mark as Posted'}
+                            </button>
                         </div>
                     </div>
                 `;
             }).join('');
+        }
+
+        // Update stats
+        function updateStats(filteredCount) {
+            const total = collections.length;
+            const posted = Object.values(postedStatus).filter(Boolean).length;
+            document.getElementById('totalCollections').textContent = total;
+            document.getElementById('postedCollections').textContent = posted;
+            document.getElementById('pendingCollections').textContent = total - posted;
         }
 
         // Copy content to clipboard
@@ -465,7 +519,7 @@
             if (!collection) return;
 
             const content = collection.platforms[platform];
-            const text = `HOOK:\n${content.hook}\n\nCAPTION:\n${content.caption}\n\nHASHTAGS:\n${content.hashtags}\n\nVIDEO: ${collection.videos.carousel}`;
+            const text = `HOOK:\n${content.hook}\n\nCAPTION:\n${content.caption}\n\nHASHTAGS:\n${content.hashtags}`;
 
             navigator.clipboard.writeText(text).then(() => {
                 showToast('✅ Content copied to clipboard!');
@@ -480,13 +534,20 @@
             const collection = collections.find(c => c.id === collectionId);
             if (!collection) return;
 
-            const videoPath = `outputs/carousel_videos/${collection.videos.carousel}`;
+            const videoPath = `../data/videos/${collection.videos.carousel}`;
             const link = document.createElement('a');
             link.href = videoPath;
             link.download = collection.videos.carousel;
             link.click();
             
             showToast('📥 Downloading video...');
+        }
+
+        // Toggle posted status
+        function togglePostedStatus(collectionId) {
+            postedStatus[collectionId] = !postedStatus[collectionId];
+            localStorage.setItem('postedStatus', JSON.stringify(postedStatus));
+            renderCollections();
         }
 
         // Show toast notification
@@ -507,14 +568,17 @@
                 document.querySelectorAll('.platform-tab').forEach(t => t.classList.remove('active'));
                 tab.classList.add('active');
                 currentPlatform = tab.dataset.platform;
-                document.getElementById('currentPlatform').textContent = 
-                    currentPlatform.charAt(0).toUpperCase() + currentPlatform.slice(1);
                 renderCollections();
             });
         });
 
         document.getElementById('brandFilter').addEventListener('change', (e) => {
             currentBrand = e.target.value;
+            renderCollections();
+        });
+
+        document.getElementById('statusFilter').addEventListener('change', (e) => {
+            currentStatusFilter = e.target.value;
             renderCollections();
         });
 
