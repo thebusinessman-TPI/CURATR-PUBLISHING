@@ -1,0 +1,10 @@
+name = "curatr-openai-proxy"
+main = "openai-proxy.js"
+compatibility_date = "2024-01-01"
+
+# Environment variables (secrets)
+# Set via: wrangler secret put OPENAI_API_KEY
+# Value: sk-DsVQCUC8vLdbjhpCvmzyMq
+
+[env.production]
+name = "curatr-openai-proxy"

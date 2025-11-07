@@ -352,6 +352,8 @@
                 <button class="platform-tab active" data-platform="instagram">📸 Instagram</button>
                 <button class="platform-tab" data-platform="tiktok">🎵 TikTok</button>
                 <button class="platform-tab" data-platform="youtube">📺 YouTube</button>
+                <button class="platform-tab" data-platform="xcom">𝕏 X.com</button>
+                <button class="platform-tab" data-platform="facebook">👥 Facebook</button>
             </div>
         </div>
 
@@ -369,9 +371,12 @@
         // Configuration
         const R2_PUBLIC_URL = 'https://pub-de854dc1e16444499a966af3528a083c.r2.dev';
         const MANIFEST_URL = `${R2_PUBLIC_URL}/manifests/publishing_manifest_complete_216.json`;
+        // Cloudflare Worker proxy URL (no API key needed in browser!)
+        const OPENAI_API_URL = 'https://curatr-openai-proxy.curatr.workers.dev';
 
         let collections = [];
         let postedStatus = {};
+        let platformContentCache = {}; // Cache for AI-generated content
         let currentPlatform = 'instagram';
         let currentBrand = 'all';
         let currentStatusFilter = 'all';
@@ -433,8 +438,9 @@
 
                 collections = (await Promise.all(loadPromises)).filter(c => c !== null);
 
-                // Load posted status from local storage
+                // Load posted status and cached platform content from local storage
                 postedStatus = JSON.parse(localStorage.getItem('postedStatus')) || {};
+                platformContentCache = JSON.parse(localStorage.getItem('platformContentCache')) || {};
 
                 // Populate brand filter
                 const brands = [...new Set(collections.map(c => c.id.split('_')[0]))].sort();
@@ -455,6 +461,105 @@
                     <p style="color: #ff6b6b;">❌ Error loading collections from R2</p>
                     <p style="font-size: 14px; margin-top: 10px;">${error.message}</p>
                 `;
+            }
+        }
+
+        // Generate platform-specific content using AI
+        async function generatePlatformContent(collection, platform) {
+            const cacheKey = `${collection.id}_${platform}`;
+            
+            // Check cache first
+            if (platformContentCache[cacheKey]) {
+                return platformContentCache[cacheKey];
+            }
+
+            // Platform-specific prompts
+            const prompts = {
+                tiktok: `Transform this golf outfit content into authentic TikTok style:
+
+Hook: ${collection.hook}
+Caption: ${collection.caption}
+
+Requirements:
+- Conversational, casual tone (use "you" or first-person)
+- Start with TikTok hook (POV, question, or relatable moment)
+- 2-3 sentences max
+- Include 1-2 emojis (not excessive)
+- Focus on experience/lifestyle, not product specs
+- Use casual language ("hit different", "no cap", "fire")
+- Authentic, not promotional
+- NO hashtags
+
+Output only the TikTok caption, nothing else.`,
+                
+                xcom: `Transform this golf outfit content into X.com (Twitter) style:
+
+Hook: ${collection.hook}
+Caption: ${collection.caption}
+
+Requirements:
+- Concise and punchy (under 280 characters)
+- Thread-ready format
+- Engaging hook that stops scrolling
+- 1-2 emojis max
+- Conversational but sharp
+- Can be split into 2-3 tweets if needed
+- NO hashtags (X algorithm doesn't need them)
+
+Output only the X.com post, nothing else.`,
+                
+                facebook: `Transform this golf outfit content into Facebook style:
+
+Hook: ${collection.hook}
+Caption: ${collection.caption}
+
+Requirements:
+- Longer-form, conversational (3-4 sentences)
+- Community-focused and engaging
+- Ask a question or encourage comments
+- Warm, friendly tone
+- 1-2 emojis
+- Focus on lifestyle and relatability
+- Include subtle call-to-action
+
+Output only the Facebook post, nothing else.`
+            };
+
+            const systemPrompt = "You are a social media content creator specializing in golf fashion and lifestyle. Your style is authentic, conversational, and platform-appropriate. You understand each platform's unique voice and audience expectations.";
+
+            try {
+                const response = await fetch(OPENAI_API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        model: 'gpt-4.1-mini',
+                        messages: [
+                            { role: 'system', content: systemPrompt },
+                            { role: 'user', content: prompts[platform] }
+                        ],
+                        temperature: 0.8,
+                        max_tokens: 200
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API error: ${response.status}`);
+                }
+
+                const data = await response.json();
+                const generatedContent = data.choices[0].message.content.trim();
+
+                // Cache the result
+                platformContentCache[cacheKey] = generatedContent;
+                localStorage.setItem('platformContentCache', JSON.stringify(platformContentCache));
+
+                return generatedContent;
+            } catch (error) {
+                console.error(`Error generating ${platform} content:`, error);
+                // Fallback to shortened Instagram caption
+                return `${collection.hook}\n\n${collection.caption.substring(0, 150)}...`;
             }
         }
 
@@ -527,14 +632,6 @@
                     <h4>Hashtags:</h4>
                     <p>${collection.hashtags || 'No hashtags available'}</p>
                 `;
-            } else if (currentPlatform === 'tiktok') {
-                return `
-                    <h4>Hook:</h4>
-                    <p>${collection.hook || 'No hook available'}</p>
-                    <h4>Caption:</h4>
-                    <p>${collection.caption || 'No caption available'}</p>
-                    <p style="color: #888; font-size: 12px; margin-top: 8px;">ℹ️ TikTok format: No hashtags</p>
-                `;
             } else if (currentPlatform === 'youtube') {
                 return `
                     <h4>Hook:</h4>
@@ -543,7 +640,50 @@
                     <p>${collection.coordinationStory || collection.caption || 'No story available'}</p>
                     <p style="color: #888; font-size: 12px; margin-top: 8px;">ℹ️ YouTube format: Narrative style</p>
                 `;
+            } else if (['tiktok', 'xcom', 'facebook'].includes(currentPlatform)) {
+                // For AI-generated platforms, show cached or prompt to copy
+                const cacheKey = `${collection.id}_${currentPlatform}`;
+                const cached = platformContentCache[cacheKey];
+                
+                if (cached) {
+                    return `
+                        <h4>${currentPlatform.toUpperCase()} Content:</h4>
+                        <p>${cached}</p>
+                        <p style="color: #888; font-size: 12px; margin-top: 8px;">✨ AI-generated • <a href="#" onclick="regenerateContent('${collection.id}', '${currentPlatform}'); return false;">Regenerate</a></p>
+                    `;
+                } else {
+                    return `
+                        <div style="text-align: center; padding: 20px;">
+                            <p style="color: #888;">✨ Click "Copy Content" to generate ${currentPlatform.toUpperCase()} version</p>
+                            <p style="color: #aaa; font-size: 12px; margin-top: 8px;">Content will be generated on-demand using AI</p>
+                        </div>
+                    `;
+                }
             }
+        }
+
+        // Regenerate content (clear cache and generate new)
+        async function regenerateContent(collectionId, platform) {
+            const collection = collections.find(c => c.id === collectionId);
+            if (!collection) return;
+
+            const cacheKey = `${collectionId}_${platform}`;
+            
+            // Clear from cache
+            delete platformContentCache[cacheKey];
+            localStorage.setItem('platformContentCache', JSON.stringify(platformContentCache));
+            
+            // Generate new content
+            showToast('⏳ Regenerating content...', 'info');
+            await generatePlatformContent(collection, platform);
+            
+            // Re-render preview
+            const previewElement = document.getElementById(`preview-${collectionId}`);
+            if (previewElement) {
+                previewElement.innerHTML = getContentPreview(collection);
+            }
+            
+            showToast(`✨ ${platform.toUpperCase()} content regenerated!`);
         }
 
         // Update stats
@@ -558,7 +698,7 @@
         }
 
         // Copy content to clipboard (platform-specific)
-        function copyContent(id) {
+        async function copyContent(id) {
             const collection = collections.find(c => c.id === id);
             if (!collection) return;
 
@@ -568,12 +708,18 @@
             if (currentPlatform === 'instagram') {
                 // Instagram: Hook + Caption + Hashtags + CTA
                 content = `${collection.hook}\n\n${collection.caption}\n\n${collection.hashtags}\n\n${collection.cta}`;
-            } else if (currentPlatform === 'tiktok') {
-                // TikTok: Hook + Caption only (no hashtags, shorter format)
-                content = `${collection.hook}\n\n${collection.caption}`;
             } else if (currentPlatform === 'youtube') {
                 // YouTube Shorts: Hook + Coordination Story (narrative format)
                 content = `${collection.hook}\n\n${collection.coordinationStory || collection.caption}`;
+            } else if (['tiktok', 'xcom', 'facebook'].includes(currentPlatform)) {
+                // AI-generated platforms: Get from cache or generate
+                const cacheKey = `${collection.id}_${currentPlatform}`;
+                if (platformContentCache[cacheKey]) {
+                    content = platformContentCache[cacheKey];
+                } else {
+                    showToast('⏳ Generating content...', 'info');
+                    content = await generatePlatformContent(collection, currentPlatform);
+                }
             }
             
             navigator.clipboard.writeText(content).then(() => {
