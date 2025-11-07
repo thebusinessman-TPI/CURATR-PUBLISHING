@@ -400,17 +400,30 @@
                         const parser = new DOMParser();
                         const doc = parser.parseFromString(htmlText, 'text/html');
                         
-                        // Extract content (adjust selectors based on actual HTML structure)
-                        const hook = doc.querySelector('.hook, [class*="hook"]')?.textContent?.trim() || '';
-                        const caption = doc.querySelector('.caption, [class*="caption"]')?.textContent?.trim() || '';
-                        const hashtags = doc.querySelector('.hashtags, [class*="hashtag"]')?.textContent?.trim() || '';
+                        // Extract content from HTML
+                        const hook = doc.querySelector('.hook')?.textContent?.trim() || '';
+                        const caption = doc.querySelector('.caption')?.textContent?.trim() || '';
+                        const hashtags = doc.querySelector('.hashtags')?.textContent?.trim() || '';
+                        const cta = doc.querySelector('.cta')?.textContent?.trim() || '';
+                        
+                        // Extract coordination story from detail sections
+                        let coordinationStory = '';
+                        const detailSections = doc.querySelectorAll('.detail-section');
+                        detailSections.forEach(section => {
+                            const label = section.querySelector('.detail-label')?.textContent?.trim();
+                            if (label === 'Coordination Story') {
+                                coordinationStory = section.querySelector('.detail-content')?.textContent?.trim() || '';
+                            }
+                        });
                         
                         return {
                             id: pair.base_name,
                             videoUrl: videoUrl,
                             hook: hook,
                             caption: caption,
-                            hashtags: hashtags
+                            hashtags: hashtags,
+                            cta: cta,
+                            coordinationStory: coordinationStory
                         };
                     } catch (error) {
                         console.error(`Error loading ${pair.base_name}:`, error);
@@ -483,13 +496,8 @@
                             ${postedStatus[collection.id] ? '✓ Posted' : '⏳ Pending'}
                         </span>
                         <div class="collection-title">${collection.id}</div>
-                        <div class="content-preview">
-                            <h4>Hook:</h4>
-                            <p>${collection.hook || 'No hook available'}</p>
-                            <h4>Caption:</h4>
-                            <p>${collection.caption || 'No caption available'}</p>
-                            <h4>Hashtags:</h4>
-                            <p>${collection.hashtags || 'No hashtags available'}</p>
+                        <div class="content-preview" id="preview-${collection.id}">
+                            ${getContentPreview(collection)}
                         </div>
                         <div class="card-actions">
                             <button class="btn btn-primary" onclick="copyContent('${collection.id}')">
@@ -508,6 +516,36 @@
             `).join('');
         }
 
+        // Get platform-specific content preview
+        function getContentPreview(collection) {
+            if (currentPlatform === 'instagram') {
+                return `
+                    <h4>Hook:</h4>
+                    <p>${collection.hook || 'No hook available'}</p>
+                    <h4>Caption:</h4>
+                    <p>${collection.caption || 'No caption available'}</p>
+                    <h4>Hashtags:</h4>
+                    <p>${collection.hashtags || 'No hashtags available'}</p>
+                `;
+            } else if (currentPlatform === 'tiktok') {
+                return `
+                    <h4>Hook:</h4>
+                    <p>${collection.hook || 'No hook available'}</p>
+                    <h4>Caption:</h4>
+                    <p>${collection.caption || 'No caption available'}</p>
+                    <p style="color: #888; font-size: 12px; margin-top: 8px;">ℹ️ TikTok format: No hashtags</p>
+                `;
+            } else if (currentPlatform === 'youtube') {
+                return `
+                    <h4>Hook:</h4>
+                    <p>${collection.hook || 'No hook available'}</p>
+                    <h4>Story:</h4>
+                    <p>${collection.coordinationStory || collection.caption || 'No story available'}</p>
+                    <p style="color: #888; font-size: 12px; margin-top: 8px;">ℹ️ YouTube format: Narrative style</p>
+                `;
+            }
+        }
+
         // Update stats
         function updateStats(filteredCount) {
             const posted = Object.values(postedStatus).filter(Boolean).length;
@@ -519,33 +557,65 @@
             document.getElementById('pendingCollections').textContent = pending;
         }
 
-        // Copy content to clipboard
+        // Copy content to clipboard (platform-specific)
         function copyContent(id) {
             const collection = collections.find(c => c.id === id);
             if (!collection) return;
 
-            const content = `${collection.hook}\n\n${collection.caption}\n\n${collection.hashtags}`;
+            let content = '';
+            
+            // Platform-specific content formatting
+            if (currentPlatform === 'instagram') {
+                // Instagram: Hook + Caption + Hashtags + CTA
+                content = `${collection.hook}\n\n${collection.caption}\n\n${collection.hashtags}\n\n${collection.cta}`;
+            } else if (currentPlatform === 'tiktok') {
+                // TikTok: Hook + Caption only (no hashtags, shorter format)
+                content = `${collection.hook}\n\n${collection.caption}`;
+            } else if (currentPlatform === 'youtube') {
+                // YouTube Shorts: Hook + Coordination Story (narrative format)
+                content = `${collection.hook}\n\n${collection.coordinationStory || collection.caption}`;
+            }
             
             navigator.clipboard.writeText(content).then(() => {
-                showToast('✓ Content copied to clipboard!');
+                showToast(`✓ ${currentPlatform.toUpperCase()} content copied!`);
             }).catch(err => {
                 showToast('❌ Failed to copy content', 'error');
             });
         }
 
-        // Download video
-        function downloadVideo(id) {
+        // Download video (with CORS workaround)
+        async function downloadVideo(id) {
             const collection = collections.find(c => c.id === id);
             if (!collection) return;
 
-            const a = document.createElement('a');
-            a.href = collection.videoUrl;
-            a.download = `${id}.mp4`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            
-            showToast('⬇️ Downloading video...');
+            try {
+                showToast('⏳ Preparing download...');
+                
+                // Fetch video as blob to bypass CORS download restrictions
+                const response = await fetch(collection.videoUrl);
+                if (!response.ok) throw new Error('Failed to fetch video');
+                
+                const blob = await response.blob();
+                const blobUrl = URL.createObjectURL(blob);
+                
+                // Create download link
+                const a = document.createElement('a');
+                a.href = blobUrl;
+                a.download = `${id}.mp4`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                
+                // Clean up blob URL after a delay
+                setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+                
+                showToast('✓ Video downloaded!');
+            } catch (error) {
+                console.error('Download error:', error);
+                showToast('❌ Download failed - opening in new tab', 'error');
+                // Fallback: open in new tab
+                window.open(collection.videoUrl, '_blank');
+            }
         }
 
         // Toggle posted status
