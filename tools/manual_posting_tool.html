@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -110,25 +109,30 @@
 
         .platform-tab {
             padding: 10px 20px;
-            border: none;
+            border: 2px solid #e0e0e0;
+            background: white;
             border-radius: 8px;
-            font-size: 14px;
-            font-weight: 600;
             cursor: pointer;
+            font-size: 14px;
             transition: all 0.3s;
-            background: #f5f5f5;
-            color: #666;
+        }
+
+        .platform-tab:hover {
+            border-color: #667eea;
+            background: #f5f7ff;
         }
 
         .platform-tab.active {
             background: #667eea;
             color: white;
+            border-color: #667eea;
         }
 
         .collection-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
-            gap: 25px;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
         }
 
         .collection-card {
@@ -137,7 +141,6 @@
             overflow: hidden;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
             transition: transform 0.3s, box-shadow 0.3s;
-            position: relative;
         }
 
         .collection-card:hover {
@@ -145,153 +148,120 @@
             box-shadow: 0 8px 25px rgba(0,0,0,0.15);
         }
 
-        .collection-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px;
-        }
-
-        .collection-id {
-            font-size: 14px;
-            font-weight: 600;
-            margin-bottom: 5px;
-            opacity: 0.9;
-        }
-
-        .collection-brand {
-            font-size: 18px;
-            font-weight: bold;
-        }
-
         .video-preview {
             width: 100%;
-            height: 300px;
-            background: #f5f5f5;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #999;
-            font-size: 14px;
-            position: relative;
-        }
-
-        .video-preview video {
-            width: 100%;
-            height: 100%;
+            height: 200px;
             object-fit: cover;
+            background: #f0f0f0;
         }
 
-        .content-section {
+        .card-content {
             padding: 20px;
         }
 
-        .content-label {
-            font-size: 12px;
-            font-weight: 700;
-            color: #667eea;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 8px;
+        .collection-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+            word-break: break-word;
         }
 
-        .content-text {
-            background: #f8f9fa;
+        .content-preview {
+            background: #f5f7ff;
             padding: 15px;
             border-radius: 8px;
             margin-bottom: 15px;
-            font-size: 14px;
-            line-height: 1.6;
-            color: #333;
-            white-space: pre-wrap;
-            word-wrap: break-word;
+            max-height: 150px;
+            overflow-y: auto;
         }
 
-        .content-text.hook {
-            font-weight: 600;
-            font-size: 16px;
-            background: #fff3cd;
-        }
-
-        .content-text.hashtags {
+        .content-preview h4 {
             color: #667eea;
-            font-weight: 500;
+            font-size: 14px;
+            margin-bottom: 8px;
         }
 
-        .actions {
+        .content-preview p {
+            color: #666;
+            font-size: 13px;
+            line-height: 1.5;
+            margin-bottom: 8px;
+        }
+
+        .card-actions {
             display: flex;
             gap: 10px;
-            padding: 0 20px 20px 20px;
+            flex-wrap: wrap;
         }
 
         .btn {
             flex: 1;
-            padding: 12px;
+            padding: 10px 15px;
             border: none;
             border-radius: 8px;
+            cursor: pointer;
             font-size: 14px;
             font-weight: 600;
-            cursor: pointer;
             transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
+            min-width: 100px;
         }
 
-        .btn-copy {
+        .btn-primary {
             background: #667eea;
             color: white;
         }
 
-        .btn-copy:hover {
+        .btn-primary:hover {
             background: #5568d3;
         }
 
-        .btn-copy.copied {
-            background: #10b981;
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #333;
         }
 
-        .btn-download {
-            background: #f59e0b;
-            color: white;
+        .btn-secondary:hover {
+            background: #d0d0d0;
         }
 
-        .btn-download:hover {
-            background: #d97706;
-        }
-
-        .btn-posted {
-            background: #ef4444;
-            color: white;
-        }
-
-        .btn-posted.active {
-            background: #10b981;
-        }
-
-        .posted-badge {
-            position: absolute;
-            top: 10px;
-            right: 10px;
+        .btn-success {
             background: #10b981;
             color: white;
-            padding: 5px 10px;
-            border-radius: 6px;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
             font-size: 12px;
-            font-weight: bold;
-            z-index: 10;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .status-pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-posted {
+            background: #d1fae5;
+            color: #065f46;
         }
 
         .toast {
             position: fixed;
             bottom: 30px;
             right: 30px;
-            background: #10b981;
+            background: #333;
             color: white;
             padding: 15px 25px;
             border-radius: 8px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            font-weight: 600;
             opacity: 0;
             transform: translateY(20px);
             transition: all 0.3s;
@@ -304,6 +274,13 @@
         }
 
         .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: white;
+            font-size: 18px;
+        }
+
+        .loading {
             text-align: center;
             padding: 60px 20px;
             color: white;
@@ -337,7 +314,7 @@
     <div class="container">
         <div class="header">
             <h1>🎬 CURATR Manual Posting Tool</h1>
-            <p>Export content for Instagram, TikTok, and YouTube Shorts. Click "Copy All Content" to get the full text for each post.</p>
+            <p>Export content for Instagram, TikTok, and YouTube Shorts. Click "Copy Content" to get the text for each post.</p>
         </div>
 
         <div class="stats">
@@ -378,7 +355,8 @@
             </div>
         </div>
 
-        <div class="collection-grid" id="collectionGrid"></div>
+        <div class="loading" id="loading">Loading collections from Cloudflare R2...</div>
+        <div class="collection-grid" id="collectionGrid" style="display: none;"></div>
 
         <div class="empty-state" id="emptyState" style="display: none;">
             No collections found. Try adjusting your filters.
@@ -388,6 +366,10 @@
     <div class="toast" id="toast"></div>
 
     <script>
+        // Configuration
+        const R2_PUBLIC_URL = 'https://pub-de854dc1e16444499a966af3528a083c.r2.dev';
+        const MANIFEST_URL = `${R2_PUBLIC_URL}/manifests/publishing_manifest_complete_216.json`;
+
         let collections = [];
         let postedStatus = {};
         let currentPlatform = 'instagram';
@@ -395,16 +377,48 @@
         let currentStatusFilter = 'all';
         let searchQuery = '';
 
-        // Load data
+        // Load data from R2
         async function loadData() {
             try {
-                const response = await fetch('../data/manifests/publishing_manifest_complete_217.json');
-                const data = await response.json();
-                
-                collections = data.complete_items.map(id => ({
-                    id: id,
-                    ...data.content[id]
-                }));
+                // Load manifest
+                const manifestResponse = await fetch(MANIFEST_URL);
+                if (!manifestResponse.ok) {
+                    throw new Error(`Failed to load manifest: ${manifestResponse.status}`);
+                }
+                const manifest = await manifestResponse.json();
+
+                // Load HTML content for each collection
+                const loadPromises = manifest.matched_pairs.map(async (pair) => {
+                    const htmlUrl = `${R2_PUBLIC_URL}/content/${pair.html_file.name}`;
+                    const videoUrl = `${R2_PUBLIC_URL}/videos/${pair.video_filename}`;
+                    
+                    try {
+                        const htmlResponse = await fetch(htmlUrl);
+                        const htmlText = await htmlResponse.text();
+                        
+                        // Parse HTML content
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(htmlText, 'text/html');
+                        
+                        // Extract content (adjust selectors based on actual HTML structure)
+                        const hook = doc.querySelector('.hook, [class*="hook"]')?.textContent?.trim() || '';
+                        const caption = doc.querySelector('.caption, [class*="caption"]')?.textContent?.trim() || '';
+                        const hashtags = doc.querySelector('.hashtags, [class*="hashtag"]')?.textContent?.trim() || '';
+                        
+                        return {
+                            id: pair.base_name,
+                            videoUrl: videoUrl,
+                            hook: hook,
+                            caption: caption,
+                            hashtags: hashtags
+                        };
+                    } catch (error) {
+                        console.error(`Error loading ${pair.base_name}:`, error);
+                        return null;
+                    }
+                });
+
+                collections = (await Promise.all(loadPromises)).filter(c => c !== null);
 
                 // Load posted status from local storage
                 postedStatus = JSON.parse(localStorage.getItem('postedStatus')) || {};
@@ -419,10 +433,15 @@
                     brandFilter.appendChild(option);
                 });
 
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('collectionGrid').style.display = 'grid';
                 renderCollections();
             } catch (error) {
                 console.error('Error loading data:', error);
-                showToast('Error loading data. Make sure you are running this from the `tools` directory.', 'error');
+                document.getElementById('loading').innerHTML = `
+                    <p style="color: #ff6b6b;">❌ Error loading collections from R2</p>
+                    <p style="font-size: 14px; margin-top: 10px;">${error.message}</p>
+                `;
             }
         }
 
@@ -439,8 +458,8 @@
                                       (currentStatusFilter === 'pending' && !postedStatus[c.id]);
                 const matchesSearch = searchQuery === '' || 
                     c.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                    (c.platforms[currentPlatform]?.hook || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-                    (c.platforms[currentPlatform]?.caption || '').toLowerCase().includes(searchQuery.toLowerCase());
+                    c.hook.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    c.caption.toLowerCase().includes(searchQuery.toLowerCase());
                 
                 return matchesBrand && matchesStatus && matchesSearch;
             });
@@ -456,105 +475,92 @@
             grid.style.display = 'grid';
             emptyState.style.display = 'none';
 
-            grid.innerHTML = filtered.map(collection => {
-                const platform = collection.platforms[currentPlatform];
-                const brand = collection.id.split('_')[0];
-                const videoPath = `../data/videos/${collection.videos.carousel}`;
-                const isPosted = postedStatus[collection.id];
-                
-                return `
-                    <div class="collection-card">
-                        ${isPosted ? '<div class="posted-badge">POSTED</div>' : ''}
-                        <div class="collection-header">
-                            <div class="collection-id">${collection.id}</div>
-                            <div class="collection-brand">${brand}</div>
+            grid.innerHTML = filtered.map(collection => `
+                <div class="collection-card">
+                    <video class="video-preview" src="${collection.videoUrl}" controls></video>
+                    <div class="card-content">
+                        <span class="status-badge ${postedStatus[collection.id] ? 'status-posted' : 'status-pending'}">
+                            ${postedStatus[collection.id] ? '✓ Posted' : '⏳ Pending'}
+                        </span>
+                        <div class="collection-title">${collection.id}</div>
+                        <div class="content-preview">
+                            <h4>Hook:</h4>
+                            <p>${collection.hook || 'No hook available'}</p>
+                            <h4>Caption:</h4>
+                            <p>${collection.caption || 'No caption available'}</p>
+                            <h4>Hashtags:</h4>
+                            <p>${collection.hashtags || 'No hashtags available'}</p>
                         </div>
-                        
-                        <div class="video-preview">
-                            <video controls muted loop playsinline>
-                                <source src="${videoPath}" type="video/mp4">
-                                Video not available
-                            </video>
-                        </div>
-                        
-                        <div class="content-section">
-                            <div class="content-label">Hook</div>
-                            <div class="content-text hook">${platform.hook || 'N/A'}</div>
-                            
-                            <div class="content-label">Caption</div>
-                            <div class="content-text">${platform.caption || 'N/A'}</div>
-                            
-                            <div class="content-label">Hashtags</div>
-                            <div class="content-text hashtags">${platform.hashtags || 'N/A'}</div>
-                        </div>
-                        
-                        <div class="actions">
-                            <button class="btn btn-copy" onclick="copyContent('${collection.id}', '${currentPlatform}')">
-                                📋 Copy All Content
+                        <div class="card-actions">
+                            <button class="btn btn-primary" onclick="copyContent('${collection.id}')">
+                                📋 Copy Content
                             </button>
-                            <button class="btn btn-download" onclick="downloadVideo('${collection.id}')">
-                                ⬇️ Download Video
+                            <button class="btn btn-secondary" onclick="downloadVideo('${collection.id}')">
+                                ⬇️ Download
                             </button>
-                            <button class="btn btn-posted ${isPosted ? 'active' : ''}" onclick="togglePostedStatus('${collection.id}')">
-                                ${isPosted ? '✅ Posted' : 'Mark as Posted'}
+                            <button class="btn ${postedStatus[collection.id] ? 'btn-secondary' : 'btn-success'}" 
+                                    onclick="togglePosted('${collection.id}')">
+                                ${postedStatus[collection.id] ? '↩️ Unmark' : '✓ Mark Posted'}
                             </button>
                         </div>
                     </div>
-                `;
-            }).join('');
+                </div>
+            `).join('');
         }
 
         // Update stats
         function updateStats(filteredCount) {
-            const total = collections.length;
             const posted = Object.values(postedStatus).filter(Boolean).length;
-            document.getElementById('totalCollections').textContent = total;
+            const total = collections.length;
+            const pending = total - posted;
+
+            document.getElementById('totalCollections').textContent = filteredCount;
             document.getElementById('postedCollections').textContent = posted;
-            document.getElementById('pendingCollections').textContent = total - posted;
+            document.getElementById('pendingCollections').textContent = pending;
         }
 
         // Copy content to clipboard
-        function copyContent(collectionId, platform) {
-            const collection = collections.find(c => c.id === collectionId);
+        function copyContent(id) {
+            const collection = collections.find(c => c.id === id);
             if (!collection) return;
 
-            const content = collection.platforms[platform];
-            const text = `HOOK:\n${content.hook}\n\nCAPTION:\n${content.caption}\n\nHASHTAGS:\n${content.hashtags}`;
-
-            navigator.clipboard.writeText(text).then(() => {
-                showToast('✅ Content copied to clipboard!');
+            const content = `${collection.hook}\n\n${collection.caption}\n\n${collection.hashtags}`;
+            
+            navigator.clipboard.writeText(content).then(() => {
+                showToast('✓ Content copied to clipboard!');
             }).catch(err => {
-                console.error('Failed to copy:', err);
                 showToast('❌ Failed to copy content', 'error');
             });
         }
 
         // Download video
-        function downloadVideo(collectionId) {
-            const collection = collections.find(c => c.id === collectionId);
+        function downloadVideo(id) {
+            const collection = collections.find(c => c.id === id);
             if (!collection) return;
 
-            const videoPath = `../data/videos/${collection.videos.carousel}`;
-            const link = document.createElement('a');
-            link.href = videoPath;
-            link.download = collection.videos.carousel;
-            link.click();
+            const a = document.createElement('a');
+            a.href = collection.videoUrl;
+            a.download = `${id}.mp4`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
             
-            showToast('📥 Downloading video...');
+            showToast('⬇️ Downloading video...');
         }
 
         // Toggle posted status
-        function togglePostedStatus(collectionId) {
-            postedStatus[collectionId] = !postedStatus[collectionId];
+        function togglePosted(id) {
+            postedStatus[id] = !postedStatus[id];
             localStorage.setItem('postedStatus', JSON.stringify(postedStatus));
             renderCollections();
+            showToast(postedStatus[id] ? '✓ Marked as posted!' : '↩️ Unmarked');
         }
 
         // Show toast notification
         function showToast(message, type = 'success') {
             const toast = document.getElementById('toast');
             toast.textContent = message;
-            toast.style.background = type === 'error' ? '#ef4444' : '#10b981';
+            toast.style.background = type === 'error' ? '#ef4444' : '#333';
             toast.classList.add('show');
             
             setTimeout(() => {
