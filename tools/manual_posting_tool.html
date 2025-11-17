@@ -555,6 +555,9 @@ Output only the Facebook post, nothing else.`
                 platformContentCache[cacheKey] = generatedContent;
                 localStorage.setItem('platformContentCache', JSON.stringify(platformContentCache));
 
+                // Refresh UI to show cached content
+                renderCollections();
+
                 return generatedContent;
             } catch (error) {
                 console.error(`Error generating ${platform} content:`, error);
@@ -672,6 +675,9 @@ Output only the Facebook post, nothing else.`
             // Clear from cache
             delete platformContentCache[cacheKey];
             localStorage.setItem('platformContentCache', JSON.stringify(platformContentCache));
+
+            // Refresh UI
+            renderCollections();
             
             // Generate new content
             showToast('⏳ Regenerating content...', 'info');
