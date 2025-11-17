@@ -28,8 +28,8 @@ export default {
       // Parse the incoming request
       const body = await request.json();
 
-      // Forward to OpenAI API (via Manus proxy)
-      const openaiResponse = await fetch('https://api.manus.im/api/llm-proxy/v1/chat/completions', {
+      // Forward to OpenAI API directly
+      const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
