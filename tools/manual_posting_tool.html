@@ -410,7 +410,8 @@
                         const caption = doc.querySelector('.caption')?.textContent?.trim() || '';
                         const hashtags = doc.querySelector('.hashtags')?.textContent?.trim() || '';
                         const cta = doc.querySelector('.cta')?.textContent?.trim() || '';
-                        
+                        const userName = doc.querySelector('.username')?.textContent?.trim() || '';
+
                         // Extract coordination story from detail sections
                         let coordinationStory = '';
                         const detailSections = doc.querySelectorAll('.detail-section');
@@ -420,7 +421,7 @@
                                 coordinationStory = section.querySelector('.detail-content')?.textContent?.trim() || '';
                             }
                         });
-                        
+
                         return {
                             id: pair.base_name,
                             videoUrl: videoUrl,
@@ -428,7 +429,8 @@
                             caption: caption,
                             hashtags: hashtags,
                             cta: cta,
-                            coordinationStory: coordinationStory
+                            coordinationStory: coordinationStory,
+                            userName: userName
                         };
                     } catch (error) {
                         console.error(`Error loading ${pair.base_name}:`, error);
@@ -604,6 +606,7 @@ Output only the Facebook post, nothing else.`
                             ${postedStatus[collection.id] ? '✓ Posted' : '⏳ Pending'}
                         </span>
                         <div class="collection-title">${collection.id}</div>
+                        ${collection.userName ? `<div style="color: #667eea; font-size: 13px; margin: 5px 0 10px 0; font-weight: 600;">👤 @${collection.userName.replace(/\s+/g, '')}</div>` : ''}
                         <div class="content-preview" id="preview-${collection.id}">
                             ${getContentPreview(collection)}
                         </div>
