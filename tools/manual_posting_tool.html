@@ -376,9 +376,12 @@
         const OPENAI_API_URL = 'https://curatr-openai-proxy.curatr.workers.dev';
 
         // Supabase Configuration (using anon key - safe for browser)
-        const SUPABASE_URL = 'https://jtnwbglyvhhivkdvmqfb.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp0bndiZ2x5dmhoaXZrZHZtcWZiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjY1OTk2OTIsImV4cCI6MjA0MjE3NTY5Mn0.ZCkF0h8nKjdRd_s9kK7pxYvJwD-Sk4F-Ig7wAW-Oqqg';
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const SUPABASE_URL = 'https://zdckegrnixkbzepfrsmw.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpkY2tlZ3JuaXhrYnplcGZyc213Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0MjQyNTMsImV4cCI6MjA3NTAwMDI1M30.ajXbxqTUc34nI1HWNh5FjhwqIXsTCP-BFQyS856lXC8';
+        const { createClient } = supabase;
+        const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        console.log('Supabase client initialized:', supabaseClient ? 'SUCCESS' : 'FAILED');
 
         let collections = [];
         let postedStatus = {};
@@ -388,28 +391,52 @@
         let currentStatusFilter = 'all';
         let searchQuery = '';
 
+        // Cache all user profiles for faster lookups
+        let userProfilesCache = null;
+
         // Fetch user profile from Supabase by handle or name
         async function getUserPrimaryCPlatform(userName) {
             if (!userName) return null;
 
             try {
+                // Load all profiles once and cache them
+                if (!userProfilesCache) {
+                    const { data, error } = await supabaseClient
+                        .from('user_profiles')
+                        .select('primary_social_platform, instagram_handle, tiktok_handle, youtube_handle, twitter_handle, facebook_handle, display_name');
+
+                    if (error) {
+                        console.error('Error loading user profiles:', error);
+                        return null;
+                    }
+                    userProfilesCache = data || [];
+                    console.log(`Loaded ${userProfilesCache.length} user profiles into cache`);
+                }
+
                 // Clean the username (remove @ if present)
-                const cleanName = userName.replace('@', '');
+                const cleanName = userName.replace('@', '').toLowerCase().trim();
+                console.log(`Looking up platform for: ${cleanName}`);
 
-                // Try to find user by matching handle fields or display_name
-                const { data, error } = await supabase
-                    .from('user_profiles')
-                    .select('primary_social_platform, instagram_handle, tiktok_handle, youtube_handle, twitter_handle, display_name')
-                    .or(`instagram_handle.ilike.%${cleanName}%,tiktok_handle.ilike.%${cleanName}%,youtube_handle.ilike.%${cleanName}%,twitter_handle.ilike.%${cleanName}%,display_name.ilike.%${cleanName}%`)
-                    .limit(1)
-                    .single();
+                // Find matching profile (case-insensitive)
+                const profile = userProfilesCache.find(p => {
+                    const ig = (p.instagram_handle || '').toLowerCase().trim();
+                    const tt = (p.tiktok_handle || '').toLowerCase().trim();
+                    const yt = (p.youtube_handle || '').toLowerCase().trim();
+                    const tw = (p.twitter_handle || '').toLowerCase().trim();
+                    const fb = (p.facebook_handle || '').toLowerCase().trim();
+                    const dn = (p.display_name || '').toLowerCase().trim();
 
-                if (error || !data) {
+                    return ig === cleanName || tt === cleanName || yt === cleanName ||
+                           tw === cleanName || fb === cleanName || dn === cleanName;
+                });
+
+                if (!profile) {
                     console.log(`No user profile found for: ${userName}`);
                     return null;
                 }
 
-                return data.primary_social_platform;
+                console.log(`✅ Found platform for ${userName}:`, profile.primary_social_platform);
+                return profile.primary_social_platform;
             } catch (error) {
                 console.error(`Error fetching user profile for ${userName}:`, error);
                 return null;
@@ -444,7 +471,7 @@
                         const caption = doc.querySelector('.caption')?.textContent?.trim() || '';
                         const hashtags = doc.querySelector('.hashtags')?.textContent?.trim() || '';
                         const cta = doc.querySelector('.cta')?.textContent?.trim() || '';
-                        const userName = doc.querySelector('.username')?.textContent?.trim() || '';
+                        const userName = (doc.querySelector('.username')?.textContent?.trim() || '').replace(/"/g, '');
 
                         // Extract coordination story from detail sections
                         let coordinationStory = '';
@@ -649,14 +676,9 @@ Output only the Facebook post, nothing else.`
                         </span>
                         <div class="collection-title">${collection.id}</div>
                         ${collection.userName ? `
-                            <div style="color: #667eea; font-size: 13px; margin: 5px 0 5px 0; font-weight: 600;">
-                                👤 @${collection.userName.replace(/\s+/g, '')}
+                            <div style="color: #667eea; font-size: 13px; margin: 5px 0 10px 0; font-weight: 600;">
+                                👤 ${collection.userName.replace(/\s+/g, '')}${collection.primaryPlatform ? ` (${collection.primaryPlatform.charAt(0).toUpperCase() + collection.primaryPlatform.slice(1)})` : ''}
                             </div>
-                            ${collection.primaryPlatform ? `
-                                <div style="color: #22a593; font-size: 12px; margin: 0 0 10px 0; font-weight: 600;">
-                                    📱 Primary Platform: ${collection.primaryPlatform.charAt(0).toUpperCase() + collection.primaryPlatform.slice(1)}
-                                </div>
-                            ` : '<div style="margin-bottom: 10px;"></div>'}
                         ` : ''}
                         <div class="content-preview" id="preview-${collection.id}">
                             ${getContentPreview(collection)}
