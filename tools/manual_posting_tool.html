@@ -367,12 +367,18 @@
 
     <div class="toast" id="toast"></div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
         // Configuration
         const R2_PUBLIC_URL = 'https://pub-de854dc1e16444499a966af3528a083c.r2.dev';
         const MANIFEST_URL = `${R2_PUBLIC_URL}/manifests/publishing_manifest_complete_276.json`;
         // Cloudflare Worker proxy URL (no API key needed in browser!)
         const OPENAI_API_URL = 'https://curatr-openai-proxy.curatr.workers.dev';
+
+        // Supabase Configuration (using anon key - safe for browser)
+        const SUPABASE_URL = 'https://jtnwbglyvhhivkdvmqfb.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp0bndiZ2x5dmhoaXZrZHZtcWZiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjY1OTk2OTIsImV4cCI6MjA0MjE3NTY5Mn0.ZCkF0h8nKjdRd_s9kK7pxYvJwD-Sk4F-Ig7wAW-Oqqg';
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let collections = [];
         let postedStatus = {};
@@ -381,6 +387,34 @@
         let currentBrand = 'all';
         let currentStatusFilter = 'all';
         let searchQuery = '';
+
+        // Fetch user profile from Supabase by handle or name
+        async function getUserPrimaryCPlatform(userName) {
+            if (!userName) return null;
+
+            try {
+                // Clean the username (remove @ if present)
+                const cleanName = userName.replace('@', '');
+
+                // Try to find user by matching handle fields or display_name
+                const { data, error } = await supabase
+                    .from('user_profiles')
+                    .select('primary_social_platform, instagram_handle, tiktok_handle, youtube_handle, twitter_handle, display_name')
+                    .or(`instagram_handle.ilike.%${cleanName}%,tiktok_handle.ilike.%${cleanName}%,youtube_handle.ilike.%${cleanName}%,twitter_handle.ilike.%${cleanName}%,display_name.ilike.%${cleanName}%`)
+                    .limit(1)
+                    .single();
+
+                if (error || !data) {
+                    console.log(`No user profile found for: ${userName}`);
+                    return null;
+                }
+
+                return data.primary_social_platform;
+            } catch (error) {
+                console.error(`Error fetching user profile for ${userName}:`, error);
+                return null;
+            }
+        }
 
         // Load data from R2
         async function loadData() {
@@ -439,6 +473,14 @@
                 });
 
                 collections = (await Promise.all(loadPromises)).filter(c => c !== null);
+
+                // Fetch primary social platform for each collection with a userName
+                console.log('Fetching user primary platforms from Supabase...');
+                await Promise.all(collections.map(async (collection) => {
+                    if (collection.userName) {
+                        collection.primaryPlatform = await getUserPrimaryCPlatform(collection.userName);
+                    }
+                }));
 
                 // Load posted status and cached platform content from local storage
                 postedStatus = JSON.parse(localStorage.getItem('postedStatus')) || {};
@@ -606,7 +648,16 @@ Output only the Facebook post, nothing else.`
                             ${postedStatus[collection.id] ? '✓ Posted' : '⏳ Pending'}
                         </span>
                         <div class="collection-title">${collection.id}</div>
-                        ${collection.userName ? `<div style="color: #667eea; font-size: 13px; margin: 5px 0 10px 0; font-weight: 600;">👤 @${collection.userName.replace(/\s+/g, '')}</div>` : ''}
+                        ${collection.userName ? `
+                            <div style="color: #667eea; font-size: 13px; margin: 5px 0 5px 0; font-weight: 600;">
+                                👤 @${collection.userName.replace(/\s+/g, '')}
+                            </div>
+                            ${collection.primaryPlatform ? `
+                                <div style="color: #22a593; font-size: 12px; margin: 0 0 10px 0; font-weight: 600;">
+                                    📱 Primary Platform: ${collection.primaryPlatform.charAt(0).toUpperCase() + collection.primaryPlatform.slice(1)}
+                                </div>
+                            ` : '<div style="margin-bottom: 10px;"></div>'}
+                        ` : ''}
                         <div class="content-preview" id="preview-${collection.id}">
                             ${getContentPreview(collection)}
                         </div>
